@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tankless Math - app</title>
+<link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">
+<style>
+  :root { --accent: #9a5a3a; }
+  h1 { color: var(--accent); margin-bottom: 0.2em; }
+  .tag { color: var(--accent); font-style: italic; }
+  .card { border: 1px solid #ddd; border-left: 4px solid var(--accent); padding: 1em 1.2em; margin: 1.2em 0; border-radius: 4px; }
+  .big { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-top: 0.8em; }
+  .err { color: #b00; font-weight: 700; }
+  label { display: block; margin-top: 0.6em; font-size: 0.9em; }
+  input, select { max-width: 12em; }
+  .foot { margin-top: 2.5em; font-size: 0.85em; color: #777; }
+</style>
+</head>
+<body>
+<h1>Tankless Math</h1>
+<p class="tag">GPM truth, morning truth and burner truth - labeled norms, honest arithmetic.</p>
+
+<div class="card">
+  <h3>The GPM truth</h3>
+  <label for="g-sticker">Sticker flow (GPM)</label>
+  <input id="g-sticker" type="number" step="any" value="9">
+  <label for="g-inlet">Winter inlet water (F)</label>
+  <input id="g-inlet" type="number" step="any" value="40">
+  <p class="big" id="g-out"></p>
+</div>
+
+<div class="card">
+  <h3>The morning truth</h3>
+  <label for="m-gpm">Honest flow (GPM)</label>
+  <input id="m-gpm" type="number" step="any" value="3.9">
+  <label for="m-showers">Simultaneous showers</label>
+  <input id="m-showers" type="number" step="any" value="2">
+  <p class="big" id="m-out"></p>
+</div>
+
+<div class="card">
+  <h3>The burner truth</h3>
+  <label for="b-gpm">Flow to heat (GPM)</label>
+  <input id="b-gpm" type="number" step="any" value="4">
+  <label for="b-rise">Temperature rise (F)</label>
+  <input id="b-rise" type="number" step="any" value="80">
+  <p class="big" id="b-out"></p>
+</div>
+
+<p class="foot">The 35 F rise, the 120 F setpoint and the 2 GPM shower are labeled norms - the arithmetic is honest, but your plumber and your gas line own the install questions.</p>
+
+<script src="engine.js"></script>
+<script>
+function g(id){ return document.getElementById(id); }
+function v(id){ var n = parseFloat(g(id).value); return isNaN(n) ? NaN : n; }
+function show(id, s, bad){ var el = g(id); el.textContent = s; el.className = bad ? "err big" : "big"; }
+
+function runGpm(){
+  var args = [v("g-sticker"), v("g-inlet")];
+  var r = TanklessMath.gpmPlan.apply(null, args);
+  if (r.error) return show("g-out", r.error, true);
+  show("g-out", TanklessMath.renderGpm.apply(null, [r].concat(args)), false);
+}
+function runMorning(){
+  var args = [v("m-gpm"), v("m-showers")];
+  var r = TanklessMath.morningPlan.apply(null, args);
+  if (r.error) return show("m-out", r.error, true);
+  show("m-out", TanklessMath.renderMorning.apply(null, [r].concat(args)), false);
+}
+function runGas(){
+  var args = [v("b-gpm"), v("b-rise")];
+  var r = TanklessMath.gasPlan.apply(null, args);
+  if (r.error) return show("b-out", r.error, true);
+  show("b-out", TanklessMath.renderGas.apply(null, [r].concat(args)), false);
+}
+["g-sticker", "g-inlet"].forEach(function(id){ g(id).addEventListener("input", runGpm); });
+["m-gpm", "m-showers"].forEach(function(id){ g(id).addEventListener("input", runMorning); });
+["b-gpm", "b-rise"].forEach(function(id){ g(id).addEventListener("input", runGas); });
+runGpm(); runMorning(); runGas();
+</script>
+</body>
+</html>
